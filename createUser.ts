@@ -1,6 +1,8 @@
-const { randomUUID } = require("node:crypto")
+import { APIGatewayEvent } from "aws-lambda";
+import { randomUUID } from "node:crypto"
 
-exports.createUser = async (event) => {
+
+export const createUser = async (event: APIGatewayEvent) => {
     try {
         if (!event.body) {
             return {

@@ -30,7 +30,7 @@ functions:
           path: /users
           method: post
 
-    getUserById:
+  getUserById:
     handler: getUserById.getUserById
     events:
       - httpApi:
