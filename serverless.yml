@@ -1,0 +1,38 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: cansanidevelopment
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: first-serverless
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: first-serverless
+
+plugins:
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  # Uncomment to easily set up a custom domain. Read the docs for more details:
+  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
+  # domain: api.example.com
+
+functions:
+  firstFunction:
+    handler: firstFunction.firstFunction
+    events:
+      - httpApi:
+          path: /
+          method: get
+
+  createUser:
+    handler: createUser.createUser
+    events:
+      - httpApi:
+          path: /users
+          method: post
+
+    getUserById:
+    handler: getUserById.getUserById
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: get
