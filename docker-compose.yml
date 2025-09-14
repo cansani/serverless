@@ -1,0 +1,9 @@
+services:
+  db:
+    image: mongodb/mongodb-community-server
+    container_name: mongodb-serverless
+    ports:
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=serverless
+      - MONGO_INITDB_ROOT_PASSWORD=serverless

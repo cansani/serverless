@@ -1,6 +1,5 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { randomUUID } from "node:crypto"
-
+import { mongoConnection } from "../lib/mongo-connection";
 
 export const createUser = async (event: APIGatewayEvent) => {
     try {
@@ -24,14 +23,23 @@ export const createUser = async (event: APIGatewayEvent) => {
             }
         }
 
+        const db = await mongoConnection()
+        const usersCollection = db.collection("users")
+        const document = {
+            name: body.name
+        }
+        const { insertedId } = await usersCollection.insertOne(document) 
+
         return {
             statusCode: 201,
             body: JSON.stringify({
-                id: randomUUID(),
+                id: insertedId,
                 name: body.name
             })
         }
     } catch (err) {
+        console.error(err)
+
         return {
             statusCode: 500,
             body: JSON.stringify({

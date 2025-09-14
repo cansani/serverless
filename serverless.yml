@@ -8,31 +8,58 @@ service: first-serverless
 plugins:
   - serverless-offline
 
+params:
+  default:
+    connectionString: mongodb://serverless:serverless@localhost:27017
+    dbName: serverless
+    
+
 provider:
   name: aws
   runtime: nodejs20.x
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
+  environment:
+    MONGO_DB_CONN_STR: ${param:connectionString}
+    MONGO_DB_NAME: ${param:dbName}
 
 functions:
   firstFunction:
-    handler: firstFunction.firstFunction
+    handler: functions/firstFunction.firstFunction
     events:
       - httpApi:
           path: /
           method: get
 
   createUser:
-    handler: createUser.createUser
+    handler: functions/createUser.createUser
     events:
       - httpApi:
           path: /users
           method: post
 
   getUserById:
-    handler: getUserById.getUserById
+    handler: functions/getUserById.getUserById
     events:
       - httpApi:
           path: /users/{id}
           method: get
+
+  getUsers:
+    handler: functions/getUsers.getUsers
+    events:
+      - httpApi:
+          path: /users
+          method: get
+
+  updateUser:
+    handler: functions/updateUser.updateUser
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: patch
+
+  deleteUser:
+    handler: functions/deleteUser.deleteUser
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: delete
