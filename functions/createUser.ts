@@ -14,11 +14,11 @@ export const createUser = async (event: APIGatewayEvent) => {
 
         const body = JSON.parse(event.body)
 
-        if (!body.name) {
+        if (!body.name || !body.password) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
-                    message: "Name is required."
+                    message: "Fields is required."
                 })
             }
         }
@@ -26,16 +26,14 @@ export const createUser = async (event: APIGatewayEvent) => {
         const db = await mongoConnection()
         const usersCollection = db.collection("users")
         const document = {
-            name: body.name
+            name: body.name,
+            password: body.password
         }
-        const { insertedId } = await usersCollection.insertOne(document) 
+        
+        await usersCollection.insertOne(document) 
 
         return {
-            statusCode: 201,
-            body: JSON.stringify({
-                id: insertedId,
-                name: body.name
-            })
+            statusCode: 201
         }
     } catch (err) {
         console.error(err)

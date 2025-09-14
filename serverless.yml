@@ -12,6 +12,7 @@ params:
   default:
     connectionString: mongodb://serverless:serverless@localhost:27017
     dbName: serverless
+    jwtSecret: serverless-dev
     
 
 provider:
@@ -20,6 +21,7 @@ provider:
   environment:
     MONGO_DB_CONN_STR: ${param:connectionString}
     MONGO_DB_NAME: ${param:dbName}
+    JWT_SECRET: ${param:jwtSecret}
 
 functions:
   firstFunction:
@@ -63,3 +65,17 @@ functions:
       - httpApi:
           path: /users/{id}
           method: delete
+  
+  signIn:
+    handler: functions/signIn.signIn
+    events:
+      - httpApi:
+          path: /sessions
+          method: post
+
+  getAuthenticatedUser:
+    handler: functions/getAuthenticatedUser.getAuthenticatedUser
+    events:
+      - httpApi:
+          path: /me
+          method: get
