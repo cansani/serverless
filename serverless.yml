@@ -26,57 +26,50 @@ provider:
     JWT_SECRET: ${param:jwtSecret}
 
 functions:
-  firstFunction:
-    handler: functions/firstFunction.firstFunction
-    events:
-      - httpApi:
-          path: /
-          method: get
-
   createUser:
-    handler: functions/createUser.createUser
+    handler: src/functions/create-user.createUser
     events:
       - httpApi:
           path: /users
           method: post
 
   getUserById:
-    handler: functions/getUserById.getUserById
+    handler: src/functions/get-user-by-id.getUserById
     events:
       - httpApi:
           path: /users/{id}
           method: get
 
   getUsers:
-    handler: functions/getUsers.getUsers
+    handler: src/functions/get-users.getUsers
     events:
       - httpApi:
           path: /users
           method: get
 
   updateUser:
-    handler: functions/updateUser.updateUser
+    handler: src/functions/update-user.updateUser
     events:
       - httpApi:
           path: /users/{id}
           method: patch
 
   deleteUser:
-    handler: functions/deleteUser.deleteUser
+    handler: src/functions/delete-user.deleteUser
     events:
       - httpApi:
           path: /users/{id}
           method: delete
   
   signIn:
-    handler: functions/signIn.signIn
+    handler: src/functions/sign-in.signIn
     events:
       - httpApi:
           path: /sessions
           method: post
 
   getAuthenticatedUser:
-    handler: functions/getAuthenticatedUser.getAuthenticatedUser
+    handler: src/functions/get-authenticated-user.getAuthenticatedUser
     events:
       - httpApi:
           path: /me

@@ -1,37 +1,51 @@
 import { APIGatewayEvent } from "aws-lambda"
-import { mongoConnection } from "../lib/mongo-connection"
 import { ObjectId } from "mongodb"
 import z, { ZodError } from "zod"
+import { dynamo } from "../lib/dynamo-connection"
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb"
+import { User } from "../interfaces/user-interface"
 
 export const getUserById = async (event: APIGatewayEvent) => {
     const requestSchema = z.object({
-        id: z.string().refine((id) => {
-            return ObjectId.isValid(id)
-        })
+        id: z.uuid()
     })
 
     try {
         const { id } = requestSchema.parse(event.pathParameters)
 
-        const db = await mongoConnection()
-        const usersCollection = db.collection("users")
+        const { Items } = await dynamo.send(new QueryCommand({
+            TableName: "users",
+            IndexName: "user_id_gsi",
+            KeyConditionExpression: "user_id = :uuid",
+            ExpressionAttributeValues: {
+                ":uuid": id
+            }
+        }))
 
-        const foundUser = await usersCollection.findOne({
-            _id: new ObjectId(id)
-        })
+        const notFoundUser = !Items || Items.length > 1
 
-        if (!foundUser) {
+        if (notFoundUser) {
             return {
-                statusCode: 200,
+                statusCode: 400,
                 body: JSON.stringify({
                     message: "User not found."
                 })
             }
         }
 
+        const foundUser = Items[0] as User
+
+        const { Item } = await dynamo.send(new GetCommand({
+            TableName: "users",
+            Key: {
+                name: foundUser.name,
+                user_id: foundUser.user_id
+            }
+        }))
+
         return {
             statusCode: 200,
-            body: JSON.stringify(foundUser)
+            body: JSON.stringify(Item)
         }
     } catch (err) {
         if (err instanceof ZodError) {

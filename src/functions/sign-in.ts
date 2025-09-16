@@ -1,7 +1,9 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { mongoConnection } from "../lib/mongo-connection";
 import { sign } from "jsonwebtoken"
 import z, { ZodError } from "zod";
+import { dynamo } from "../lib/dynamo-connection";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { User } from "../interfaces/user-interface";
 
 export const signIn = async (event: APIGatewayEvent) => {
     const requestSchema = z.object({
@@ -14,14 +16,20 @@ export const signIn = async (event: APIGatewayEvent) => {
     try {
         const { name, password } = requestSchema.parse(body)
 
-        const db = await mongoConnection()
-        const collection = db.collection("users")
+        const { Items } = await dynamo.send(new QueryCommand({
+            TableName: "users",
+            KeyConditionExpression: "#name = :name",
+            ExpressionAttributeNames: {
+                "#name": "name"
+            },
+            ExpressionAttributeValues: {
+                ":name": name
+            }
+        }))
 
-        const user = await collection.findOne({
-            name
-        })
+        //console.log(Items)
 
-        if (!user) {
+        if (!Items || Items.length === 0) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
@@ -29,6 +37,8 @@ export const signIn = async (event: APIGatewayEvent) => {
                 })
             }
         }
+
+        const user = Items[0] as User
 
         const userPassword = user.password
 
@@ -47,7 +57,7 @@ export const signIn = async (event: APIGatewayEvent) => {
 
         const token = sign(
             {
-                id: user._id
+                id: user.user_id
             },
             process.env.JWT_SECRET,
             {

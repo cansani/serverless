@@ -1,6 +1,8 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { mongoConnection } from "../lib/mongo-connection";
 import z, { ZodError } from "zod";
+import { dynamo } from "../lib/dynamo-connection"; 
+import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { randomUUID } from "node:crypto";
 
 export const createUser = async (event: APIGatewayEvent) => {
     const requestSchema = z.object({
@@ -13,14 +15,20 @@ export const createUser = async (event: APIGatewayEvent) => {
     try {
         const { name, password } = requestSchema.parse(body)
 
-        const db = await mongoConnection()
-        const usersCollection = db.collection("users")
+        const { Items } = await dynamo.send(new QueryCommand({
+            TableName: "users",
+            KeyConditionExpression: "#name = :nameValue",
+            ExpressionAttributeNames: {
+                "#name": "name"
+            },
+            ExpressionAttributeValues: {
+                ":nameValue": name
+            }
+        }))
 
-        const user = await usersCollection.findOne({
-            name
-        })
+        const userExists = Items && Items.length > 0
 
-        if (user) {
+        if (userExists) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
@@ -28,13 +36,15 @@ export const createUser = async (event: APIGatewayEvent) => {
                 })
             }
         }
-
-        const document = {
-            name: name,
-            password: password
-        }
         
-        await usersCollection.insertOne(document) 
+        await dynamo.send(new PutCommand({
+            TableName: "users",
+            Item: {
+                user_id: randomUUID(),
+                name,
+                password
+            }
+        }))
 
         return {
             statusCode: 201

@@ -1,0 +1,40 @@
+{
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "name",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "user_id",
+      "AttributeType": "S"
+    }
+  ],
+  "BillingModeSummary": {
+    "BillingMode": "PAY_PER_REQUEST",
+    "LastUpdateToPayPerRequestDateTime": "2025-09-16T21:51:42.992Z"
+  },
+  "CreationDateTime": "2025-09-16T21:51:42.992Z",
+  "DeletionProtectionEnabled": false,
+  "ItemCount": 0,
+  "KeySchema": [
+    {
+      "AttributeName": "name",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "user_id",
+      "KeyType": "RANGE"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "LastDecreaseDateTime": "1970-01-01T00:00:00.000Z",
+    "LastIncreaseDateTime": "1970-01-01T00:00:00.000Z",
+    "NumberOfDecreasesToday": 0,
+    "ReadCapacityUnits": 0,
+    "WriteCapacityUnits": 0
+  },
+  "TableArn": "arn:aws:dynamodb:ddblocal:000000000000:table/users",
+  "TableName": "users",
+  "TableSizeBytes": 0,
+  "TableStatus": "ACTIVE"
+}
