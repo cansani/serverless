@@ -1,8 +1,9 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { JsonWebTokenError, JwtPayload, verify } from "jsonwebtoken"
-import { mongoConnection } from "../lib/mongo-connection";
-import { ObjectId } from "mongodb";
 import z, { ZodError } from "zod";
+import { dynamo } from "../lib/dynamo-connection";
+import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { User } from "../interfaces/user-interface";
 
 function verifyJwt(token: string) {
     return verify(token, process.env.JWT_SECRET!) as JwtPayload
@@ -22,16 +23,29 @@ export const getAuthenticatedUser = async (event: APIGatewayEvent) => {
 
         const userId = jwtToken.id
 
-        const db = await mongoConnection()
-        const usersCollection = db.collection("users")
+        const { Items } = await dynamo.send(new QueryCommand({
+            TableName: "users",
+            IndexName: "user_id_gsi",
+            KeyConditionExpression: "user_id = :uuid",
+            ExpressionAttributeValues: {
+                ":uuid": userId 
+            }
+        }))
 
-        if (typeof userId !== "string") {
-            throw new Error()
+        //console.log(Items)
+
+        if (!Items || Items.length === 0) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Failed to fetch user."
+                })
+            }
         }
 
-        const user = await usersCollection.findOne({
-            _id: new ObjectId(userId)
-        })
+        const user = Items[0] as User
+
+        //console.log(user)
 
         return {
             statusCode: 200,

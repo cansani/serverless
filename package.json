@@ -7,8 +7,9 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.890.0",
+    "@aws-sdk/lib-dynamodb": "^3.890.0",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.19.0",
     "zod": "^4.1.8"
   }
 }

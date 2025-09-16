@@ -1,9 +1,7 @@
 services:
   db:
-    image: mongodb/mongodb-community-server
-    container_name: mongodb-serverless
+    image: amazon/dynamodb-local
+    container_name: dynamodb-serverless
     ports:
-      - '27017:27017'
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=serverless
-      - MONGO_INITDB_ROOT_PASSWORD=serverless
+      - '8000:8000'
+    command: "-jar DynamoDBLocal.jar -sharedDb"
