@@ -16,6 +16,19 @@ export const createUser = async (event: APIGatewayEvent) => {
         const db = await mongoConnection()
         const usersCollection = db.collection("users")
 
+        const user = await usersCollection.findOne({
+            name
+        })
+
+        if (user) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "User already exists.",
+                })
+            }
+        }
+
         const document = {
             name: name,
             password: password
