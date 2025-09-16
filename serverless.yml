@@ -8,11 +8,13 @@ service: first-serverless
 plugins:
   - serverless-offline
 
+useDotenv: true
+
 params:
   default:
-    connectionString: mongodb://serverless:serverless@localhost:27017
-    dbName: serverless
-    jwtSecret: serverless-dev
+    connectionString: ${env:DATABASE_URL}
+    dbName: ${env:DB_NAME}
+    jwtSecret: ${env:JWT_SECRET}
     
 
 provider:
