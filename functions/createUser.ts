@@ -1,33 +1,24 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { mongoConnection } from "../lib/mongo-connection";
+import z, { ZodError } from "zod";
 
 export const createUser = async (event: APIGatewayEvent) => {
+    const requestSchema = z.object({
+        name: z.string().min(3),
+        password: z.string().min(6)
+    })
+
+    const body = JSON.parse(event.body || "{}")
+
     try {
-        if (!event.body) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({
-                    message: "Missing body."
-                })
-            }
-        }
-
-        const body = JSON.parse(event.body)
-
-        if (!body.name || !body.password) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({
-                    message: "Fields is required."
-                })
-            }
-        }
+        const { name, password } = requestSchema.parse(body)
 
         const db = await mongoConnection()
         const usersCollection = db.collection("users")
+
         const document = {
-            name: body.name,
-            password: body.password
+            name: name,
+            password: password
         }
         
         await usersCollection.insertOne(document) 
@@ -36,6 +27,16 @@ export const createUser = async (event: APIGatewayEvent) => {
             statusCode: 201
         }
     } catch (err) {
+        if (err instanceof ZodError) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Validation error.",
+                    issues: z.prettifyError(err)
+                })
+            }
+        }
+
         console.error(err)
 
         return {

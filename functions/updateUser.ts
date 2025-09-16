@@ -1,47 +1,43 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { mongoConnection } from "../lib/mongo-connection";
 import { ObjectId } from "mongodb";
+import z, { ZodError } from "zod";
 
 export const updateUser = async (event: APIGatewayEvent) => {
+    const requestCreateUserSchema = z.object({
+        name: z.string().min(3),
+        password: z.string().min(6)
+    })
+
+    const updateUserSchema = requestCreateUserSchema.partial().strict()
+
+    const pathParametersSchema = z.object({
+        id: z.string().refine((id) => ObjectId.isValid(id))
+    })
+
     try {
+        const { id } = pathParametersSchema.parse(event.pathParameters)
+
+        const body = JSON.parse(event.body || "{}")
+
+        const { name, password } = updateUserSchema.parse(body)
+
         const db = await mongoConnection()
         const usersCollection = db.collection("users")
-        
-        if (!event.body) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({
-                    message: "Missing body"
-                })
-            }
-        }
 
-        if (!event.pathParameters) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({
-                    message: "Missing path parameters"
-                })
-            }
-        }
+        type UserInput = z.infer<typeof requestCreateUserSchema>
 
-        if (!ObjectId.isValid(event.pathParameters.id!)) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({
-                    message: "User not found."
-                })
-            }
-        }
+        const updateFields: Partial<UserInput> = {}
 
-        const { name } = JSON.parse(event.body)
+        if (name) updateFields.name = name
+        if (password) updateFields.password = password
 
         const updatedUser = await usersCollection.findOneAndUpdate(
             {
-                _id: new ObjectId(event.pathParameters.id)
+                _id: new ObjectId(id)
             },
             {
-                $set: { name }
+                $set: updateFields
             },
             {
                 returnDocument: "after"
@@ -56,6 +52,16 @@ export const updateUser = async (event: APIGatewayEvent) => {
             })
         }
     } catch (err) {
+        if (err instanceof ZodError) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Validation error.",
+                    issues: z.prettifyError(err)
+                })
+            }
+        }
+
         console.error(err)
 
         return {

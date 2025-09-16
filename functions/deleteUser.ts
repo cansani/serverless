@@ -1,32 +1,23 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { ObjectId } from "mongodb";
 import { mongoConnection } from "../lib/mongo-connection";
+import z, { ZodError } from "zod";
 
 export const deleteUser = async (event: APIGatewayEvent) => {
-    if (!event.pathParameters) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({
-                message: "Missing path parameters"
-            })
-        }
-    }
-
-    if (!ObjectId.isValid(event.pathParameters.id!)) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({
-                message: "User not found."
-            })
-        }
-    }
+    const requestPathParametersSchema = z.object({
+        id: z.string().refine((id) => {
+            return ObjectId.isValid(id)
+        })
+    })
 
     try {
+        const { id } = requestPathParametersSchema.parse(event.pathParameters)
+
         const db = await mongoConnection()
         const usersCollection = db.collection("users")
 
         await usersCollection.deleteOne({
-            _id: new ObjectId(event.pathParameters.id)
+            _id: new ObjectId(id)
         })
 
         return {
@@ -36,6 +27,16 @@ export const deleteUser = async (event: APIGatewayEvent) => {
             })
         }
     } catch (err) {
+        if (err instanceof ZodError) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Validation error.",
+                    issues: z.prettifyError(err)
+                })
+            }
+        }
+
         console.error(err)
 
         return {
