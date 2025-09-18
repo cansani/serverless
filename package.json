@@ -4,11 +4,14 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.3",
     "serverless-offline": "^14.4.0",
+    "serverless-s3-local": "^0.8.5",
     "typescript": "^5.9.2"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.890.0",
+    "@aws-sdk/client-s3": "^3.891.0",
     "@aws-sdk/lib-dynamodb": "^3.890.0",
+    "fast-csv": "^5.0.5",
     "jsonwebtoken": "^9.0.2",
     "zod": "^4.1.8"
   }
