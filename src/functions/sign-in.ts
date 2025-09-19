@@ -1,7 +1,7 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { sign } from "jsonwebtoken"
 import z, { ZodError } from "zod";
-import { dynamo } from "../lib/dynamo-connection";
+import { dynamo } from "../lib/dynamo/dynamo-connection";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { User } from "../interfaces/user-interface";
 

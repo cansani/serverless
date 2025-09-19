@@ -7,6 +7,7 @@ service: first-serverless
 
 plugins:
   - serverless-offline
+  - serverless-s3-local
 
 useDotenv: true
 
@@ -15,6 +16,7 @@ params:
     connectionString: ${env:DATABASE_URL}
     dbName: ${env:DB_NAME}
     jwtSecret: ${env:JWT_SECRET}
+    bucketName: ${env:BUCKET_NAME}
     
 
 provider:
@@ -24,6 +26,7 @@ provider:
     MONGO_DB_CONN_STR: ${param:connectionString}
     MONGO_DB_NAME: ${param:dbName}
     JWT_SECRET: ${param:jwtSecret}
+    BUCKET_NAME: ${param:bucketName}
 
 functions:
   createUser:
@@ -74,3 +77,20 @@ functions:
       - httpApi:
           path: /me
           method: get
+
+  uploadUsers:
+    handler: src/functions/upload-users.uploadUsers
+    events:
+      - httpApi:
+          path: /users/upload
+          method: post
+
+  createUsersInBatch:
+    handler: src/functions/create-users-in-batch.createUsersInBatch
+    events:
+      - s3:
+          bucket: ${param:bucketName}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .json
+            - suffix: .csv

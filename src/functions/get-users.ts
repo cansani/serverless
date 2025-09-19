@@ -1,5 +1,5 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { dynamo } from "../lib/dynamo-connection";
+import { dynamo } from "../lib/dynamo/dynamo-connection";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 
 export const getUsers = async (event: APIGatewayEvent) => {
