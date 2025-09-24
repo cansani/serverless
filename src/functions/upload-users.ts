@@ -1,21 +1,36 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { s3 } from "../lib/s3/connection";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { join } from "node:path";
-import { readFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 
-import testFile from "../users/test-users.json"
+//TODO: Validar o content-type
 
 export const uploadUsers = async (event: APIGatewayEvent) => {
     try {
-        const testFilename = "test-users.json"
-        //const filePath = join(__dirname, "../users/", testFilename)
-        //const contentFile = await readFile(filePath, "utf-8")
+        const fileInBase64 = event.isBase64Encoded
+        const contentType = event.headers["content-type"]
+        const fileExtension = contentType?.split("/")[1]
+
+        if (!event.body) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Failed to upload file."
+                })
+            }   
+        }
+
+        const encoding = fileInBase64 ? "base64" : "utf-8"
+        const fileBuffer = Buffer.from(event.body, encoding)
+
+        const randomId = randomUUID()
+        const generateFileName = `users-${randomId}.${fileExtension}`
 
         await s3.send(new PutObjectCommand({
             Bucket: process.env.BUCKET_NAME,
-            Key: testFilename,
-            Body: JSON.stringify(testFile) //contentFile
+            Key: generateFileName,
+            Body: fileBuffer,
+            ContentType: contentType
         }))
 
         return {

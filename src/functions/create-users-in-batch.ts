@@ -30,8 +30,6 @@ export const createUsersInBatch = async (event: S3CreateEvent) => {
 
         const contentFile = await Body.transformToString()
 
-        console.log(contentFile)
-
         let fileUsers: RequestUser[] = []
 
         if (fileExtension === "json") {
