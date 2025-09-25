@@ -1,19 +1,12 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { JsonWebTokenError, JwtPayload, verify } from "jsonwebtoken"
+import { headersSchema } from "./validate";
+import { verifyJwt } from "../../../middlewares/verify-jwt";
+import { findUniqueById } from "../../../repositories/users-repository";
 import z, { ZodError } from "zod";
-import { dynamo } from "../lib/dynamo/dynamo-connection";
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { User } from "../interfaces/user-interface";
-
-function verifyJwt(token: string) {
-    return verify(token, process.env.JWT_SECRET!) as JwtPayload
-}
+import { JsonWebTokenError } from "jsonwebtoken";
+import { env } from "../../../env";
 
 export const getAuthenticatedUser = async (event: APIGatewayEvent) => {
-    const headersSchema = z.object({
-        authorization: z.string().startsWith("Bearer ")
-    })
-
     try {
         const { authorization } = headersSchema.parse(event.headers)
 
@@ -23,18 +16,9 @@ export const getAuthenticatedUser = async (event: APIGatewayEvent) => {
 
         const userId = jwtToken.id
 
-        const { Items } = await dynamo.send(new QueryCommand({
-            TableName: "users",
-            IndexName: "user_id_gsi",
-            KeyConditionExpression: "user_id = :uuid",
-            ExpressionAttributeValues: {
-                ":uuid": userId 
-            }
-        }))
+        const user = await findUniqueById(userId)
 
-        //console.log(Items)
-
-        if (!Items || Items.length === 0) {
+        if (!user) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
@@ -42,10 +26,6 @@ export const getAuthenticatedUser = async (event: APIGatewayEvent) => {
                 })
             }
         }
-
-        const user = Items[0] as User
-
-        //console.log(user)
 
         return {
             statusCode: 200,
@@ -71,7 +51,9 @@ export const getAuthenticatedUser = async (event: APIGatewayEvent) => {
             }
         }
 
-        console.error(err)
+        if (env.NODE_ENV === "dev") {
+            console.error(err)
+        }
 
         return {
             statusCode: 500,

@@ -13,66 +13,61 @@ useDotenv: true
 
 params:
   default:
-    connectionString: ${env:DATABASE_URL}
-    dbName: ${env:DB_NAME}
     jwtSecret: ${env:JWT_SECRET}
     bucketName: ${env:BUCKET_NAME}
-    
 
 provider:
   name: aws
   runtime: nodejs20.x
   environment:
-    MONGO_DB_CONN_STR: ${param:connectionString}
-    MONGO_DB_NAME: ${param:dbName}
     JWT_SECRET: ${param:jwtSecret}
     BUCKET_NAME: ${param:bucketName}
 
 functions:
   createUser:
-    handler: src/functions/create-user.createUser
+    handler: src/controllers/users/create/index.handler
     events:
       - httpApi:
           path: /users
           method: post
 
   getUserById:
-    handler: src/functions/get-user-by-id.getUserById
+    handler: src/controllers/users/get-user/index.handler
     events:
       - httpApi:
           path: /users/{id}
           method: get
 
   getUsers:
-    handler: src/functions/get-users.getUsers
+    handler: src/controllers/users/get-all-users/index.handler
     events:
       - httpApi:
           path: /users
           method: get
 
   updateUser:
-    handler: src/functions/update-user.updateUser
+    handler: src/controllers/users/update/index.handler
     events:
       - httpApi:
           path: /users/{id}
           method: patch
 
   deleteUser:
-    handler: src/functions/delete-user.deleteUser
+    handler: src/controllers/users/delete/index.handler
     events:
       - httpApi:
           path: /users/{id}
           method: delete
   
   signIn:
-    handler: src/functions/sign-in.signIn
+    handler: src/controllers/authenticate/sign-in/index.handler
     events:
       - httpApi:
           path: /sessions
           method: post
 
   getAuthenticatedUser:
-    handler: src/functions/get-authenticated-user.getAuthenticatedUser
+    handler: src/controllers/authenticate/get-authenticated-user.ts/index.handler
     events:
       - httpApi:
           path: /me

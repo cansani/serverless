@@ -1,40 +1,21 @@
 import { APIGatewayEvent } from "aws-lambda";
+import { requestUpdatePathParametersSchema, requestUpdateUserSchema, UserInput } from "./validate";
+import { findUniqueById, update } from "../../../repositories/users-repository";
+import { env } from "../../../env";
 import z, { ZodError } from "zod";
-import { dynamo } from "../lib/dynamo/dynamo-connection";
-import { QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { User } from "../interfaces/user-interface";
 
 export const updateUser = async (event: APIGatewayEvent) => {
-    const requestCreateUserSchema = z.object({
-        name: z.string().min(3),
-        password: z.string().min(6)
-    })
-
-    const updateUserSchema = requestCreateUserSchema.partial().strict()
-
-    const pathParametersSchema = z.object({
-        id: z.uuid()
-    })
+    const body = JSON.parse(event.body || "{}")
 
     try {
-        const { id } = pathParametersSchema.parse(event.pathParameters)
-
-        const body = JSON.parse(event.body || "{}")
+        const { id } = requestUpdatePathParametersSchema.parse(event.pathParameters)
+        const updateUserSchema = requestUpdateUserSchema.partial().strict()
 
         const { name, password } = updateUserSchema.parse(body)
 
-        const { Items } = await dynamo.send(new QueryCommand({
-            TableName: "users",
-            IndexName: "user_id_gsi",
-            KeyConditionExpression: "user_id = :uuid",
-            ExpressionAttributeValues: {
-                ":uuid": id
-            }
-        }))
+        const user = await findUniqueById(id)
 
-        const notFoundUser = !Items || Items.length > 1
-        
-        if (notFoundUser) {
+        if (!user) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
@@ -42,10 +23,6 @@ export const updateUser = async (event: APIGatewayEvent) => {
                 })
             }
         }
-
-        const foundUser = Items[0] as User
-
-        type UserInput = z.infer<typeof requestCreateUserSchema>
 
         const updateFields: Partial<UserInput> = {}
 
@@ -68,16 +45,16 @@ export const updateUser = async (event: APIGatewayEvent) => {
             expressionsAttValues[`:${key}`] = value
         }
 
-        const updatedUser = await dynamo.send(new UpdateCommand({
-            TableName: "users",
-            Key: {
-                name: foundUser.name,
-                user_id: foundUser.user_id
-            },
-            UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-            ExpressionAttributeValues: expressionsAttValues,
-            ReturnValues: "ALL_NEW"
-        }))
+        const updatedUser = await update(user, updateExpressions, expressionsAttValues)
+
+        if (!updatedUser) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "User not found",
+                })
+            } 
+        }
 
         return {
             statusCode: 200,
@@ -97,7 +74,9 @@ export const updateUser = async (event: APIGatewayEvent) => {
             }
         }
 
-        console.error(err)
+        if (env.NODE_ENV === "dev") {
+            console.error(err)
+        }
 
         return {
             statusCode: 500,

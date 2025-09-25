@@ -1,35 +1,19 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { sign } from "jsonwebtoken"
+import { requestSchema } from "./validate";
+import { findUniqueByName } from "../../../repositories/users-repository";
+import { sign } from "jsonwebtoken";
+import { env } from "../../../env";
 import z, { ZodError } from "zod";
-import { dynamo } from "../lib/dynamo/dynamo-connection";
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { User } from "../interfaces/user-interface";
 
 export const signIn = async (event: APIGatewayEvent) => {
-    const requestSchema = z.object({
-        name: z.string().min(3),
-        password: z.string().min(6)
-    })
-
     const body = JSON.parse(event.body || "{}")
 
     try {
         const { name, password } = requestSchema.parse(body)
 
-        const { Items } = await dynamo.send(new QueryCommand({
-            TableName: "users",
-            KeyConditionExpression: "#name = :name",
-            ExpressionAttributeNames: {
-                "#name": "name"
-            },
-            ExpressionAttributeValues: {
-                ":name": name
-            }
-        }))
+        const user = await findUniqueByName(name)
 
-        //console.log(Items)
-
-        if (!Items || Items.length === 0) {
+        if (!user) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
@@ -38,10 +22,8 @@ export const signIn = async (event: APIGatewayEvent) => {
             }
         }
 
-        const user = Items[0] as User
-
         const userPassword = user.password
-
+        
         if (userPassword !== password) {
             return {
                 statusCode: 400,
@@ -51,15 +33,11 @@ export const signIn = async (event: APIGatewayEvent) => {
             }
         }
 
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET doesnt exists.")
-        }
-
         const token = sign(
             {
                 id: user.user_id
             },
-            process.env.JWT_SECRET,
+            env.JWT_SECRET,
             {
                 expiresIn: "24h"
             }
@@ -82,12 +60,14 @@ export const signIn = async (event: APIGatewayEvent) => {
             }
         }
 
-        console.error(err)
+        if (env.NODE_ENV === "dev") {
+            console.error(err)
+        }
 
         return {
-            statusCode: 400,
+            statusCode: 500,
             body: JSON.stringify({
-                message: "Internal Server Error",
+                message: "Internal Server Error"
             })
         }
     }
