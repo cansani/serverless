@@ -53,7 +53,7 @@ export const updateUser = async (event: APIGatewayEvent) => {
                 body: JSON.stringify({
                     message: "User not found",
                 })
-            } 
+            }
         }
 
         return {

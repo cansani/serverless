@@ -22,7 +22,7 @@ export const createUser = async (event: APIGatewayEvent) => {
                 })
             }
         }
-        
+
         await create({ name, password })
 
         return {

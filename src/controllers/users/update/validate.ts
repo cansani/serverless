@@ -10,4 +10,3 @@ export const requestUpdatePathParametersSchema = z.object({
 })
 
 export type UserInput = z.infer<typeof requestUpdateUserSchema>
-

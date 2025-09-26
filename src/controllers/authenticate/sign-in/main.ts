@@ -23,7 +23,7 @@ export const signIn = async (event: APIGatewayEvent) => {
         }
 
         const userPassword = user.password
-        
+
         if (userPassword !== password) {
             return {
                 statusCode: 400,
