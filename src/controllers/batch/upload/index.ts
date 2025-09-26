@@ -1,6 +1,6 @@
-import { APIGatewayEvent } from "aws-lambda";
-import { uploadUsersInBatch } from "./main";
+import { APIGatewayEvent } from 'aws-lambda';
+import { uploadUsersInBatch } from './main';
 
 export const handler = async (event: APIGatewayEvent) => {
-    return uploadUsersInBatch(event)
-}
+  return uploadUsersInBatch(event);
+};

@@ -1,5 +1,5 @@
-import z from "zod";
+import z from 'zod';
 
 export const headersSchema = z.object({
-    authorization: z.string().startsWith("Bearer ")
-})
+  authorization: z.string().startsWith('Bearer '),
+});
