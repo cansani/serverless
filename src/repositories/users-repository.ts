@@ -51,7 +51,7 @@ export async function findUniqueById(id: string): Promise<User | null> {
     }))
 
     const notFoundUser = !Items || Items.length === 0
-    
+
     if (notFoundUser) {
         return null
     }

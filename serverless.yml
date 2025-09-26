@@ -58,7 +58,7 @@ functions:
       - httpApi:
           path: /users/{id}
           method: delete
-  
+
   signIn:
     handler: src/controllers/authenticate/sign-in/index.handler
     events:
@@ -74,14 +74,14 @@ functions:
           method: get
 
   uploadUsers:
-    handler: src/functions/upload-users.uploadUsers
+    handler: src/controllers/batch/upload/index.handler
     events:
       - httpApi:
           path: /users/upload
           method: post
 
   createUsersInBatch:
-    handler: src/functions/create-users-in-batch.createUsersInBatch
+    handler: src/controllers/batch/create/index.handler
     events:
       - s3:
           bucket: ${param:bucketName}

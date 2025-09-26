@@ -1,12 +1,10 @@
-import { APIGatewayEvent } from "aws-lambda";
-import { s3 } from "../lib/s3/connection";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { APIGatewayEvent } from "aws-lambda"
 import { randomUUID } from "node:crypto";
+import { putObject } from "../../../services/s3-service";
+import { env } from "../../../env";
 
-//TODO: Validar o content-type
-
-export const uploadUsers = async (event: APIGatewayEvent) => {
-    try {
+export const uploadUsersInBatch = async (event: APIGatewayEvent) => {
+  try {
         const fileInBase64 = event.isBase64Encoded
         const contentType = event.headers["content-type"]
         const fileExtension = contentType?.split("/")[1]
@@ -17,7 +15,16 @@ export const uploadUsers = async (event: APIGatewayEvent) => {
                 body: JSON.stringify({
                     message: "Failed to upload file."
                 })
-            }   
+            }
+        }
+
+        if (!fileExtension) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              message: "Content-type is missing."
+            })
+          }
         }
 
         const encoding = fileInBase64 ? "base64" : "utf-8"
@@ -26,12 +33,9 @@ export const uploadUsers = async (event: APIGatewayEvent) => {
         const randomId = randomUUID()
         const generateFileName = `users-${randomId}.${fileExtension}`
 
-        await s3.send(new PutObjectCommand({
-            Bucket: process.env.BUCKET_NAME,
-            Key: generateFileName,
-            Body: fileBuffer,
-            ContentType: contentType
-        }))
+        const bucketName = env.BUCKET_NAME
+
+        await putObject(bucketName, generateFileName, fileBuffer, contentType)
 
         return {
             statusCode: 200,
